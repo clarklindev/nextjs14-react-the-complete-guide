@@ -23,8 +23,16 @@ route.js - create an api route (page which does not return jsx code but data in 
 
 filenames are only reserved when creating them inside of the app/ folder (or any subfolder).
 
+---
+
+SERVER COMPONENT VS CLIENT COMPONENT
+to tell nextjs something is client component,
+define 'use client';
+
+---
+
 DYNAMIC ROUTES
-using [placeholder] folder:
+any string inside brackets [] eg. using [**placeholder**] folder:
 
 blog/page.js
 blog/[placeholder]/page.js
@@ -33,11 +41,32 @@ blog/[placeholder]/page.js
 
 //gets access to props to destructure a {params} object
 
-- every placeholder will be a key in params object and its value will be the url concrete value (whatever was passed in)
+- every [placeholder] will be a key in params object and its value will be the url concrete value (whatever was passed in)
 
-export default function SomePage({param}) {
-console.log(params.placeholder);  
+```js
+export default function SomePage({ param }) {
+  console.log(params.placeholder); //note the naming is same as the folder [placeholder] to get the url data
 }
+```
+
+```js
+export default function MealDetailPage({params}){
+  const meal = getMeal(params.mealSlug);
+
+  meal.instructions = meal.instructions.replace(/\n/g, '<br/>');
+
+  ...
+
+  return (<>
+    <h1>{meal.title}</h1>
+    <main>
+      <p className={} dangerouslySetInnerHTML={{__html: meal.instructions}}>
+      </p>
+    </main>
+  </>)
+
+}
+```
 
 ---
 
@@ -57,12 +86,17 @@ supports lazy loading under the hood.
 auto image size detection.
 file format .webp - different sized images are loaded depending size of viewport
 priority - loads image with priority
+you can use 'fill' prop when you dont know the width and height of images ahead of time
 
+```js
 import Image from 'next/image';
 
-<Image src={} alt="" priority/>
+<Image src={} alt="" priority fill/>
+```
 
-HARDCODED ASSETS:
+---
+
+IMAGES ALT METHOD: HARDCODED ASSETS:
 to use an import, access it via .src property in nextjs
 
 to use images, eg. from assets/logo.jpg
@@ -83,6 +117,8 @@ NAVIGATION
 ---
 
 LAYOUTS
+
+RESERVED FILENAME: 'layout.js'
 Layout renders <html> and <body> tags
 Layout - every nextjs app needs atleast 1 root layout.js
 
@@ -93,7 +129,7 @@ title:'',
 description:''
 };
 
-export default function RootLayout({children}{
+export default function RootLayout({children}){
 return (<html><body>{children}</body></html>)
 }
 
@@ -120,39 +156,71 @@ jsconfig.json using @ to target root folder
 
 ---
 
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+LOADING
 
-## Getting Started
+Nextjs embraces React's suspense to show suspense fallback while it loads
 
-First, run the development server:
+```js
+import { Suspense } from "react";
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+<Suspense>
+  <SomeComponent fallback={<p className={classes.loading}>loading...</p>} />
+</Suspense>;
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+PAGE
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+RESERVED FILENAME: 'page.js'
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+---
 
-## Learn More
+ERROR HANDLING
 
-To learn more about Next.js, take a look at the following resources:
+RESERVED FILENAME: 'error.js'
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- 'error.js' handles errors in the sibling 'page.js' file or nested 'page' or 'layout'
+- if put on root, handles all errors
+- receives error prop
+- REQUIRED: needs to be client component - so it can catch errors on client / and server
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+```js
+"use client";
 
-## Deploy on Vercel
+export default function Error({ error }) {
+  return (
+    <main className="error">
+      <h1>Error</h1>
+      <p>an error occured</p>
+    </main>
+  );
+}
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+NOT FOUND
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+RESERVED FILENAME: 'not-found.js'
+
+- catches
+
+```js
+export default function NotFound() {
+  return (
+    <main className="not-found">
+      <h1>Not found</h1>
+      <p>requested resource not found</p>
+    </main>
+  );
+}
+```
+
+- you can trigger the not found page
+- NOTE: will show closest 'not-found' OR 'error' page,
+- so if error is closer than not-found page, it will show error page if its closer, unless a not-found page is put at same level as the error page to make them equally close.
+
+```js
+import { notFound } from "next/navigation";
+
+if (!meal) {
+  notFound();
+}
+```
